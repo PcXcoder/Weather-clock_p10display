@@ -11,8 +11,13 @@ extern "C" {
 #include "wpa2_enterprise.h"
 }
 
+	
+#include <Wire.h> //I2C library
+#include <RtcDS3231.h> //RTC library
+RtcDS3231<TwoWire> rtcObject(Wire);
+
 // Your Domain name with URL path or IP address with path
-String openWeatherMapApiKey = "5d12f945551054f701e34b811effb568";
+String openWeatherMapApiKey = "=======";
 
 
 // Replace with your country code and city
@@ -41,8 +46,8 @@ String jsonBuffer;
 
 
 static const char* ssid = "eduroam";
-static const char* username = "@unesp.br";
-static const char* password = "";
+static const char* username = "bruno.bohrer@unesp.br";
+static const char* password = "=====";
 char buff[20];
 String ip;
 
@@ -107,6 +112,10 @@ ESP.wdtEnable(10000);
   server.begin();
   SetupTime();
   UpdateLocalTime();
+  rtcObject.Begin();     //Starts I2C
+  
+//  RtcDateTime currentTime = RtcDateTime(16, 05, 18, 21, 20, 0); //define date and time object
+//  rtcObject.SetDateTime(currentTime); //testar compatibilidade de variavel
 }
 
 void loop(){
@@ -220,6 +229,7 @@ boolean UpdateLocalTime() {
     CurrentTime = output;
   }
   Serial.println(CurrentTime);
+ // rtcObject.SetDateTime(currentTime); //test de var set time
   Serial.println(CurrentDate);
   return true;
 }
