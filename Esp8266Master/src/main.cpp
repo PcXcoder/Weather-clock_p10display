@@ -5,6 +5,7 @@
 boolean UpdateLocalTime();
 boolean SetupTime();
 String httpGETRequest(const char* serverName);
+String exportdata;
 const char* idTranslate(int status);
 int status;
 const char* translated;
@@ -89,17 +90,10 @@ ESP.wdtFeed();
       digitalWrite(LED_BUILTIN, HIGH);
       Tc = (int(myObject["main"]["temp"]) - 273);
       status = int(myObject["weather"][0]["id"]);
-      Serial.print(status);
-      Serial.println("Temp: ");
-      Serial.print(Tc);  //print temperature in c
-      Serial.print("C ");
       delay(900);
-      Serial.print(" Previsao: ");
-      //Serial.print(status);
       translated = idTranslate(status);
-      Serial.print(translated); //print untranstated next 4h climate prediction
-      Serial.print(" hora: ");  
-      Serial.println(CurrentTime);  //print time H:M
+      exportdata = CurrentTime + Tc + "/" + translated;
+      Serial.println(exportdata);  //print time H:M
       delay(datasync);     //garantees that the arduino is not bussy
   //    Serial.println(" "); //clear display for new update
     }
@@ -154,7 +148,7 @@ boolean UpdateLocalTime() {
   if (display_EU == true) {
     strftime(output, 30, "%d/%m/%y", localtime(&now));
     CurrentDate = output;
-    strftime(output, 30, "%H:%M", localtime(&now));
+    strftime(output, 30, "%H/%M/", localtime(&now));
     CurrentTime = output;
   }
   else { 
@@ -168,19 +162,19 @@ boolean UpdateLocalTime() {
 const char* idTranslate(int status){
     if (status >= 800) {
            if(status == 800){
-      return "ceus limpos";
+      return "Ceus Limpos";
            }
            if(status == 801){
-    return "muito poucas nuvens";
+    return "Raras Nuvens";
            }
            if(status == 802){
-    return "poucas nuvens";
+    return "Poucas Nuvens";
            }
            if(status == 803){
-    return "levemente nublado";
+    return "Levemente Nublado";
            }
            if(status == 804){
-    return "nublado";
+    return "Nublado";
            }}
 
     if(status >= 700){
@@ -194,16 +188,16 @@ const char* idTranslate(int status){
     return "Névoa";
            }
            if(status == 731){
-    return "Empoeirado";
+    return "Tempestade de areia";
            }
            if(status == 741){
-    return "neblina";
+    return "Neblina";
            }
            if(status == 751){
     return "Tempestade de areia";
            }
            if(status == 761){
-    return "Empoeirado";
+    return "Empoeirado (todo dia)";
            }
            if(status == 762){
     return "Cinzas vulcanicas??";
@@ -212,7 +206,7 @@ const char* idTranslate(int status){
     return "rajadas de vento";
            }
            if(status == 781){
-    return "Tornado";
+    return "Tornado!";
            }}
 
     if(status >= 600){
@@ -342,5 +336,5 @@ const char* idTranslate(int status){
        if(status == 232){
     return "trovoada com chuva pesada";
        }}
-  return "esqueci?";
+  return "Suporte Tecnico: deu ruim!!";
 }
