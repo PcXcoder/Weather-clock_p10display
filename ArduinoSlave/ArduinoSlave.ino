@@ -4,7 +4,6 @@
 #include <fonts/Arial_Black_16.h>
 #include <Wire.h>
 #include <DS3231.h>
-
 DS3231  rtc(SCL,SDA);
 
 
@@ -25,23 +24,16 @@ String c = "*C";
 String MESSAGE = "IEEE ";
 int pau = 0;
 bool set = false;
-
+bool block; 
+unsigned long long previousMillis = 0;
+const long intervalo = 300000; // 5min
 const int lightSensorPin = A0;
 int older = 10;
 
 boolean isValidData(String data) {          // by chat gpt ? test required
-  // Check if the data has the correct delimiter positions
-  if (data.charAt(2) != '/' || data.charAt(5) != '/' || data.charAt(8) != '/') {
+  if (data.charAt(2) != '/' || data.charAt(5) != '/') {
     return false;
   }
-
-  // Check if the first six characters are numeric
- /*for (int i = 0; i < 6; i++) {
-    if (!isDigit(data.charAt(i))) {
-      return false;
-    }
-  } */
-  // If all checks pass, the data structure is valid
   return true;
 }
 
@@ -56,7 +48,8 @@ void setup() {
   delay(100);
   digitalWrite(5, LOW);
   rtc.begin();
-    while(pau < 9){
+
+    while(pau < 9){                 // mostra ieee cm intuito de dar tempo para o esp bootar
   const char *next2 = MESSAGE.c_str();
   while(*next2) {
   //  Serial.print(*next);
@@ -66,9 +59,14 @@ void setup() {
   }
   pau = pau + 1;
 }
+
 }
 
 void loop() {
+
+
+  raw = rtc.getTimeStr();
+  someseg = raw.substring(0, 5);
 if (Serial.available() > 0) {
     receivedData = Serial.readStringUntil('\n');
 
@@ -79,25 +77,27 @@ if (Serial.available() > 0) {
       temp = receivedData.substring(6, 8);
       prev = receivedData.substring(9);
       wtd = 0;
-      MESSAGE = timetxt + ":" + timetxt2 + space + temp + c + space + prev + space; 
+         raw = rtc.getTimeStr();
+         someseg = raw.substring(0, 5);
+      MESSAGE = someseg + space + temp + c + space + prev + space;
       if (set == false){
         int min = timetxt2.toInt();
         int hour = timetxt.toInt();
         rtc.setTime(hour, min, 30); 
         set = true;
       }
-   }else{
+      }else{
 
       wtd = wtd + 1;
-      raw = rtc.getTimeStr();
-      someseg = raw.substring(0, 5);
+        raw = rtc.getTimeStr();
+        someseg = raw.substring(0, 5);
       MESSAGE = someseg + space + temp + c + space + prev + space; 
    }  
 }else{
 
   wtd = wtd + 1;
-  raw = rtc.getTimeStr();
-  someseg = raw.substring(0, 5);
+    raw = rtc.getTimeStr();
+    someseg = raw.substring(0, 5);
   MESSAGE = someseg + space + temp + c + space + prev + space; 
 }
 
