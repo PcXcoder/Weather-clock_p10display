@@ -5,12 +5,20 @@
 boolean UpdateLocalTime();
 boolean SetupTime();
 String httpGETRequest(const char* serverName);
+void reconnect();
 String exportdata;
+String mqttdata = "nda";
+String exportdata2;
 const char* idTranslate(int status);
+void callback(char* topic, byte* payload, unsigned int length);
 int status;
 const char* translated;
 int datasync = 10000;
 //SoftwareSerial swSer(14, 12); //Define hardware connections to uno [ SoftwareSerial(rxPin, txPin) ]
+WiFiClient espClient;
+PubSubClient client(espClient);
+#define MSG_BUFFER_SIZE	(50)
+char msg[MSG_BUFFER_SIZE];
 
 void setup(){
   // put your setup code here, to run once:
@@ -66,10 +74,15 @@ void setup(){
   SetupTime();
   UpdateLocalTime();
 
-
+  client.setServer(mqtt_server, 1883);
+  client.setCallback(callback);
 }
 void loop(){	
 ESP.wdtFeed();
+  if (!client.connected()) {
+    reconnect();
+  }
+  client.loop();
   if ((millis() - lastTime) > timerDelay) {
     // Check WiFi connection status
     if(WiFi.status()== WL_CONNECTED){
@@ -93,7 +106,12 @@ ESP.wdtFeed();
       delay(900);
       translated = idTranslate(status);
       exportdata = CurrentTime + Tc + "/" + translated;
-      Serial.println(exportdata);  //print time H:M
+      exportdata2 = CurrentTime + Tc + "?" + translated + " " + mqttdata;
+      if(mqttdata != "nda"){
+         Serial.println(exportdata2);  //print time H:M
+      }else{
+         Serial.println(exportdata);  //print time H:M
+      }
       delay(datasync);     //garantees that the arduino is not bussy
   //    Serial.println(" "); //clear display for new update
     }
@@ -162,19 +180,19 @@ boolean UpdateLocalTime() {
 const char* idTranslate(int status){
     if (status >= 800) {
            if(status == 800){
-      return "Ceus Limpos";
+      return "ceus limpos";
            }
            if(status == 801){
-    return "Raras Nuvens";
+    return "muito poucas nuvens";
            }
            if(status == 802){
-    return "Poucas Nuvens";
+    return "poucas nuvens";
            }
            if(status == 803){
-    return "Levemente Nublado";
+    return "levemente nublado";
            }
            if(status == 804){
-    return "Nublado";
+    return "nublado";
            }}
 
     if(status >= 700){
@@ -188,16 +206,16 @@ const char* idTranslate(int status){
     return "Névoa";
            }
            if(status == 731){
-    return "Tempestade de areia";
+    return "Empoeirado";
            }
            if(status == 741){
-    return "Neblina";
+    return "neblina";
            }
            if(status == 751){
     return "Tempestade de areia";
            }
            if(status == 761){
-    return "Empoeirado (todo dia)";
+    return "Empoeirado";
            }
            if(status == 762){
     return "Cinzas vulcanicas??";
@@ -206,7 +224,7 @@ const char* idTranslate(int status){
     return "rajadas de vento";
            }
            if(status == 781){
-    return "Tornado!";
+    return "Tornado";
            }}
 
     if(status >= 600){
@@ -336,5 +354,31 @@ const char* idTranslate(int status){
        if(status == 232){
     return "trovoada com chuva pesada";
        }}
-  return "Suporte Tecnico: deu ruim!!";
+  return "esqueci?";
+}
+
+void callback(char* topic, byte* payload, unsigned int length) {
+  mqttdata = "";
+  for (int i = 0; i < length; i++) {
+    mqttdata += (char)payload[i];
+  }
+
+}
+
+void reconnect() {
+  // Loop until we're reconnected
+  while (!client.connected()) {
+    // Create a random client ID
+    String clientId = "ESP8266Client-";
+    clientId += String(random(0xffff), HEX);
+    // Attempt to connect
+    if (client.connect(clientId.c_str())) {
+      // ... and resubscribe
+      client.subscribe("root/ieee/crn/mrk");
+    } else {
+
+      // Wait 5 seconds before retrying
+      delay(5000);
+    }
+  }
 }
